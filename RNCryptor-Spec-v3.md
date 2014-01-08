@@ -14,16 +14,18 @@
 
 All data is in network order (big-endian).
 
+Note that the version of the RNCryptor ObjC library is not directly related to the version of the RNCryptor file format. For example, v2.2 of the RNCryptor ObjC library writes v3 of the file format. The versioning of an implementation is related to its API, not the file formats it supports.
+
 ### Password-based encryption (abstract language)
 
 ```
 def Encrypt(Password, Plaintext) =
     assert(password.length > 0)
     EncryptionSalt = RandomDataOfLength(8)
-    EncryptionKey = PKBDF2(EncryptionSalt, 32 length, 10k iterations, Password)
+    EncryptionKey = PKBDF2(EncryptionSalt, 32 length, 10k iterations, SHA-1, Password)
 
     HMACSalt = RandomDataOfLength(8)
-    HMACKey = PKBDF2(HMACSalt, 32 length, 10k iterations, password)
+    HMACKey = PKBDF2(HMACSalt, 32 length, 10k iterations, SHA-1, password)
 
     IV = RandomDataOfLength(8)
 
@@ -36,13 +38,15 @@ def Encrypt(Password, Plaintext) =
 
 1. Password must be non-empty
 1. Generate a random encryption salt
-1. Generate the encryption key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random encryption salt, and 10,000 iterations. Request a length of 32 bytes.
+1. Generate the encryption key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random encryption salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
 1. Generate a random HMAC salt
-1. Generate the HMAC key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random HMAC salt, and 10,000 iterations. Request a length of 32 bytes.
+1. Generate the HMAC key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random HMAC salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
 1. Generate a random IV
 1. Encrypt the data using the encryption key (above), the IV (above), AES-256, and the CBC mode. This is the default mode for almost all AES encryption libraries.
 1. Pass your header and ciphertext to an HMAC function, along with the HMAC key (above), and the PRF "SHA-256" (see your library's docs for what the names of the PRF functions are; this might also be called "SHA-2, 256-bits").
 1. Put these elements together in the format given.
+
+Note: The RNCryptor format v3 uses SHA-1 for PBKDF2, but SHA-256 for HMAC.
 
 ### Key-based encryption (abstract language)
 
@@ -75,11 +79,13 @@ def Decrypt(Password, Message) =
 ```
 
 1. Pull apart the pieces as described in the data format.
-1. Generate the encryption key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the given encryption salt, and 10,000 iterations.
-1. Generate the HMAC key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the given HMAC salt, and 10,000 iterations.
+1. Generate the encryption key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random encryption salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
+1. Generate the HMAC key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random HMAC salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
 1. Decrypt the data using the encryption key (above), the given IV, AES-256, and the CBC mode. This is the default mode for almost all AES encryption libraries.
 1. Pass your header and ciphertext to an HMAC function, along with the HMAC key (above), and the PRF "SHA-256" (see your library's docs for what the names of the PRF functions are; this might also be called "SHA-2, 256-bits").
 1. Compare the computed HMAC with the expected HMAC using a constant time equality function (see below). If they are equal, return the plaintext. Otherwise, return an error
+
+Note: The RNCryptor format v3 uses SHA-1 for PBKDF2, but SHA-256 for HMAC.
 
 ### Consistent-time equality checking
 
