@@ -22,10 +22,10 @@ Note that the version of the RNCryptor ObjC library is not directly related to t
 def Encrypt(Password, Plaintext) =
     assert(password.length > 0)
     EncryptionSalt = RandomDataOfLength(8)
-    EncryptionKey = PKBDF2(EncryptionSalt, 32 length, 10k iterations, SHA-1, Password)
+    EncryptionKey = PBKDF2(EncryptionSalt, 32 length, 10k iterations, SHA-1, Password)
 
     HMACSalt = RandomDataOfLength(8)
-    HMACKey = PKBDF2(HMACSalt, 32 length, 10k iterations, SHA-1, password)
+    HMACKey = PBKDF2(HMACSalt, 32 length, 10k iterations, SHA-1, password)
 
     IV = RandomDataOfLength(8)
 

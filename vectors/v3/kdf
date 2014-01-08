@@ -9,12 +9,6 @@
 # Version 3 vectors
 #
 
-title:      All fields empty or zero
-version:    3
-password:	
-salt_hex:	  0000000000000000
-key_hex:  	ea339082 7e11f272 8d8050a0 1a8876c9 9588cced b47fb3b0 99bbaf9b 22685a47
-
 title:      One byte
 version:    3
 password:   a
