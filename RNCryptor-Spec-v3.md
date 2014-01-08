@@ -18,6 +18,7 @@ All data is in network order (big-endian).
 
 ```
 def Encrypt(Password, Plaintext) =
+    assert(password.length > 0)
     EncryptionSalt = RandomDataOfLength(8)
     EncryptionKey = PKBDF2(EncryptionSalt, 32 length, 10k iterations, Password)
 
@@ -33,6 +34,7 @@ def Encrypt(Password, Plaintext) =
     return Message
 ```
 
+1. Password must be non-empty
 1. Generate a random encryption salt
 1. Generate the encryption key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random encryption salt, and 10,000 iterations. Request a length of 32 bytes.
 1. Generate a random HMAC salt
