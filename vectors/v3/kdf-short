@@ -1,0 +1,52 @@
+# Test vectors for key derivation with fewer PBKDF2 iterations
+# title: trimmed-string
+# version: integer (version of format)
+# password: string (any length)
+# salt_hex: hex-string
+# key_hex: hex-string
+
+#
+# Version 3 vectors
+#
+
+title:      One byte
+version:    3
+password:   a
+iterations: 1000
+salt_hex:	  0102030405060708
+key_hex:  	d48f10b7 ae39bd25 2bb68e1f af12acea 3474d7d7 702a15b2 ede3246e 82dbb2fd
+
+title:      Short password
+version:    3
+password:   thepassword
+iterations: 1000
+salt_hex:	  0203040506070801
+key_hex:  	3d3f64cd 31d8057b 5624567a 2caeace4 84adcfda 3fbf6401 a1f03a09 5cee6dd1
+
+title:      Passphrase
+version:    3
+password:   this is a bit longer password
+iterations: 1000
+salt_hex:	  0304050607080102
+key_hex:  	18d42ea5 900f9a94 932a6a5f 10e8f89d 5222ad47 8328ecde f7ba7fe9 1b08240c
+
+title:      Long passphrase
+version:    3
+password:   $$$it was the epoch of belief, it was the epoch of incredulity; it was the season of Light, it was the season of Darkness; it was the spring of hope, it was the winter of despair; we had everything before us, we had nothing before us; we were all going directly to Heaven, we were all going the other way.
+iterations: 1000
+salt_hex:	  0405060708010203
+key_hex:  	7a7d41ca 9eb92999 23b47d63 6ff18068 1ca5449d f77b7568 2a09fa25 001618db
+
+title:      Multibyte
+version:    3
+password:   中文密码
+iterations: 1000
+salt_hex:	  0506070801020304
+key_hex:  	10ac6088 7fce25a3 5cb96b41 86e85fde 088f2cb5 5bdac89c 5deffad6 95ba8a20
+
+title:      Mixed language
+version:    3
+password:   中文密码 with a little English, too.
+iterations: 1000
+salt_hex:	  0607080102030405
+key_hex:  	1aecc100 8bf00812 1b6bbb30 201b4d62 22cf472c 3f438bcd fc52c0a0 fa03f659
