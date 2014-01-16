@@ -27,7 +27,7 @@ def Encrypt(Password, Plaintext) =
     HMACSalt = RandomDataOfLength(8)
     HMACKey = PBKDF2(HMACSalt, 32 length, 10k iterations, SHA-1, password)
 
-    IV = RandomDataOfLength(8)
+    IV = RandomDataOfLength(16)
 
     Header = 3 || 1 || EncryptionSalt || HMACSalt || IV
     Ciphertext = AES256(Plaintext, ModeCBC, IV, EncryptionKey)
