@@ -1,9 +1,9 @@
 {
-	"name": "curtisdf/rncryptor-spec",
+	"name": "rncryptor/spec",
     "type": "library",
     "description": "Specifications and test vectors for RNCryptor file format",
-    "keywords": ["encryption", "crypto"],
-    "homepage": "https://github.com/curtisdf/RNCryptor-Spec",
+    "keywords": ["encryption", "crypto", "rncryptor"],
+    "homepage": "https://github.com/RNCryptor/RNCryptor-Spec",
     "license": "MIT",
     "authors": [
         {
