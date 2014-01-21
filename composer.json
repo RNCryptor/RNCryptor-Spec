@@ -1,0 +1,14 @@
+{
+	"name": "rncryptor/spec",
+    "type": "library",
+    "description": "Specifications and test vectors for RNCryptor file format",
+    "keywords": ["encryption", "crypto", "rncryptor"],
+    "homepage": "https://github.com/RNCryptor/RNCryptor-Spec",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rob Napier",
+            "email": "robnapier@gmail.com"
+        }
+    ]
+}
