@@ -106,7 +106,7 @@ def Decrypt(prk[64], options[1], salt[16], validator[16], ciphertext, hmac[32]) 
 def KeyBasedEncrypt(key[32], plaintext) =
     salt = RandomDataOfLength(16 bytes)
 
-    // HDF-Extract
+    // HKDF-Extract
     prk = HMAC(SHA512, salt, key, 512 bits)
 
     options = 0
