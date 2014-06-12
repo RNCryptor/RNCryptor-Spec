@@ -2,11 +2,12 @@
 
 ## Data Layout
 
-    Byte:     |    0    |    1    | 2 - 17 |  18 - 33  | <-      ...     -> | n-32 - n |
-    Contents: | version | options |  salt  | validator | ... ciphertext ... |   HMAC   |
+    Byte:     |  0-2  |    3    |    4    | 5 - 20 |  21 - 36  | <-      ...     -> | n-32 - n |
+    Contents: | magic | version | options |  salt  | validator | ... ciphertext ... |   HMAC   |
 
 ### Field definitions
 
+* magic (3 bytes): "RNC"
 * version (1 byte): Data format major version (0x04)
 * options (1 byte): 
     * bit 0 - (boolean) uses password
@@ -117,19 +118,12 @@ consistency with PBKDF2, and to improve poorly generated keys (key reuse or
 non-random key selection), the actual pseudorandom key (PRK) is extracted with
 HKDF and a 128-bit random salt.
 
-Note that SHA-1 is used (rather than SHA-2) to maintain better platform
-support. .NET's Rfc2898DeriveBytes only supports SHA1HMAC. There is no security
-concern in using SHA-1 here. PBKDF2 only requires a PRF to maintain itssecurity
-proof, and SHA-1, even with its known attacks, continues to be a PRF. Hopefully
-.NET will eventually support SHA-2 PBKDF2 and we'll be able to drop SHA-1 as a
-matter of housekeeping (minimizing the number of algorithms required).
-
 ```
 def KeyBasedEncrypt(key[32], plaintext) =
     salt = RandomDataOfLength(16 bytes)
 
     // HKDF-Extract
-    prk = HMAC(SHA1, salt, key, 512 bits)
+    prk = HMAC(SHA512, salt, key, 512 bits)
 
     options = 0
 
@@ -174,7 +168,7 @@ def PasswordBasedEncrypt(password, plaintext, log10Rounds = 0) =
     salt = RandomDataOfLength(16 bytes)
 
     // PBKDF2 (standing in for HKDF-Extract)
-    prk = PBKDF2(SHA512, password, salt, rounds, 512 bits)
+    prk = PBKDF2(SHA1, password, salt, rounds, 512 bits)
 
     options = (1 << 0) | (log10Rounds << 4)
 
@@ -203,7 +197,7 @@ def PasswordBasedDecrypt(password, message) =
     else rounds = exp10(rounds)
 
     // HDF-Extract
-    prk = PBKDF2(SHA512, password, salt, rounds, 512 bits)
+    prk = PBKDF2(SHA1, password, salt, rounds, 512 bits)
 
     return Decrypt(prk, options, salt, validator, ciphertext, hmac)
 ```
@@ -255,13 +249,25 @@ AES-CBC and HMAC-SHA. It differs slightly in how it generates the keys (via
 HKDF rather than splitting the PRK), and it computes the IV via HKDF rather
 than passing a random IV.
 
+SHA-1 is used (rather than SHA-2) in PBKDF2 to maintain better platform
+support. .NET's [Rfc2898DeriveBytes](http://msdn.microsoft.com/en-us/library/system.security.cryptography.rfc2898derivebytes(v=vs.110).aspx) 
+only supports SHA1HMAC. There is no security concern in using SHA-1 here.
+PBKDF2 only requires a PRF to maintain itssecurity proof, and SHA-1, even with
+its known attacks, continues to be a PRF. Hopefully .NET will eventually
+support SHA-2 PBKDF2 and we'll be able to drop SHA-1 as a matter of
+housekeeping (minimizing the number of algorithms required).
+
 RNCryptor relies on HKDF ([RFC 5869](https://tools.ietf.org/html/rfc5869)) to
 generate random octet strings from a master 512-bit PRK.
 
-The HMAC is are truncated according to [RFC 2104 Section
-5](https://tools.ietf.org/html/rfc2104). Private HMACs are not truncated.
+The HMAC is truncated according to 
+[RFC 2104 Section 5](https://tools.ietf.org/html/rfc2104).
+Private HMACs (i.e. HMACs not directly encoded in the file format) are not
+truncated.
 
-SHA-512 is used throughout to favor CPU rather than GPU performance.
+SHA-512 is used throughout to favor CPU rather than GPU performance. Most
+legitimate uses will be computed on CPU. Attackers prefer high-speed GPU
+implementations.
 
 ## Changes since version 3.0
 
@@ -270,4 +276,4 @@ SHA-512 is used throughout to favor CPU rather than GPU performance.
 * Adds validator for fast password checking
 * Replaces SHA-1 and SHA-256 with SHA-512.
 * Unifies key- and password-based formats.
-
+* Adds magic to beginning to identify format
