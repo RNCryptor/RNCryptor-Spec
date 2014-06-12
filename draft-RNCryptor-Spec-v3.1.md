@@ -1,5 +1,7 @@
 # RNCryptor Data Format Specification Version 3.1
 
+**Abandoned. We will wait until v4.**
+
 ## Data Layout
 
 ### Key-based Encryption
