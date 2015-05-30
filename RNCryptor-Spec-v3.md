@@ -52,7 +52,7 @@ Note: The RNCryptor format v3 uses SHA-1 for PBKDF2, but SHA-256 for HMAC.
 
 ```
 def Encrypt(EncryptionKey[32], HMACKey[32], Plaintext) =
-    IV = RandomDataOfLength(8)        
+    IV = RandomDataOfLength(16)
     Header = 3 || 0 || IV
     Ciphertext = AES256(plaintext, ModeCBC, IV, EncryptionKey)
     HMAC = HMAC(Header || Ciphertext, HMACKey, SHA-256)
