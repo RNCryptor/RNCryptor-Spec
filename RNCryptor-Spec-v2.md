@@ -1,10 +1,12 @@
-## Specification for RNCryptor data format version 3
+## Specification for RNCryptor data format version 2
+
+**Note: The v2 format truncates multibyte (e.g. Chinese) passwords. This was a bug in the Objective-C version of RNCryptor that was not reproduced in other implementaions. Data encrypted with a multibyte password may not interoperate all implementations.**
 
     Byte:     |    0    |    1    |      2-9       |  10-17   | 18-33 | <-      ...     -> | n-32 - n |
     Contents: | version | options | encryptionSalt | HMACSalt |  IV   | ... ciphertext ... |   HMAC   |
     
 
-* version (1 byte): Data format version. Currently 3.
+* version (1 byte): Data format version (2)
 * options (1 byte): bit 0 - uses password
 * encryptionSalt (8 bytes): iff option includes "uses password"
 * HMACSalt (8 bytes): iff options includes "uses password"
@@ -22,14 +24,19 @@ Note that the version of the RNCryptor ObjC library is not directly related to t
 def Encrypt(Password, Plaintext) =
     assert(password.length > 0)
     EncryptionSalt = RandomDataOfLength(8)
-    EncryptionKey = PBKDF2(EncryptionSalt, 32 length, 10k iterations, SHA-1, Password)
+    
+    // See note at beginning of specification. This was a bug in the ObjC version.
+    // The password is truncated to the number of characters (rather than the number of bytes)
+    TruncatedPassword = ByteRange(Password, 0, Characters(Password))
+
+    EncryptionKey = PBKDF2(EncryptionSalt, 32 length, 10k iterations, SHA-1, TruncatedPassword)
 
     HMACSalt = RandomDataOfLength(8)
-    HMACKey = PBKDF2(HMACSalt, 32 length, 10k iterations, SHA-1, password)
+    HMACKey = PBKDF2(HMACSalt, 32 length, 10k iterations, SHA-1, TruncatedPassword)
 
     IV = RandomDataOfLength(16)
 
-    Header = 3 || 1 || EncryptionSalt || HMACSalt || IV
+    Header = 2 || 1 || EncryptionSalt || HMACSalt || IV
     Ciphertext = AES256(Plaintext, ModeCBC, IV, EncryptionKey)
     HMAC = HMAC(Header || Ciphertext, HMACKey, SHA-256)
     Message = Header || Ciphertext || HMAC
@@ -38,6 +45,7 @@ def Encrypt(Password, Plaintext) =
 
 1. Password must be non-empty
 1. Generate a random encryption salt
+1. (Incorrectly) truncate the password. Count the number of characters and use that many bytes.
 1. Generate the encryption key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random encryption salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
 1. Generate a random HMAC salt
 1. Generate the HMAC key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random HMAC salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
@@ -52,7 +60,7 @@ Note: The RNCryptor format v3 uses SHA-1 for PBKDF2, but SHA-256 for HMAC.
 
 ```
 def Encrypt(EncryptionKey[32], HMACKey[32], Plaintext) =
-    IV = RandomDataOfLength(16)
+    IV = RandomDataOfLength(8)        
     Header = 3 || 0 || IV
     Ciphertext = AES256(plaintext, ModeCBC, IV, EncryptionKey)
     HMAC = HMAC(Header || Ciphertext, HMACKey, SHA-256)
@@ -70,15 +78,22 @@ def Encrypt(EncryptionKey[32], HMACKey[32], Plaintext) =
 ```
 def Decrypt(Password, Message) =
     (Version,Options,EncryptionSalt,HMACSalt,IV,Ciphertext,HMAC) = Split(Message)
-    EncryptionKey = PKBDF2(EncryptionSalt, 32 length, 10k iterations, Password)
-    HMACKey = PKBDF2(HMACSalt, 32 length, 10k iterations, password)
-    Header = 3 || 1 || EncryptionSalt || HMACSalt || IV
+
+    // See note at beginning of specification. This was a bug in the ObjC version.
+    // The password is truncated to the number of characters (rather than the number of bytes)
+    TruncatedPassword = ByteRange(Password, 0, Characters(Password))
+
+    EncryptionKey = PKBDF2(EncryptionSalt, 32 length, 10k iterations, TruncatedPassword)
+    HMACKey = PKBDF2(HMACSalt, 32 length, 10k iterations, TruncatedPassword)
+
+    Header = 2 || 1 || EncryptionSalt || HMACSalt || IV
     Plaintext = AES256Decrypt(Ciphertext, ModeCBC, IV, EncryptionKey)
     ComputedHMAC = HMAC(Header || Ciphertext, HMACKey, SHA-256)
     if ConsistentTimeEqual(ComputedHMAC, HMAC) return Plaintext else return Error
 ```
 
 1. Pull apart the pieces as described in the data format.
+1. (Incorrectly) truncate the password. Count the number of characters and use that many bytes.
 1. Generate the encryption key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random encryption salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
 1. Generate the HMAC key using PBKDF2 (see your language docs for how to call this). Pass the password as a string, the random HMAC salt, 10,000 iterations, and SHA-1 PRF. Request a length of 32 bytes.
 1. Decrypt the data using the encryption key (above), the given IV, AES-256, and the CBC mode. This is the default mode for almost all AES encryption libraries.
