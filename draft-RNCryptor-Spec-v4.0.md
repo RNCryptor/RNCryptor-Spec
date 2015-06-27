@@ -76,8 +76,9 @@ Expand().
 def Encrypt(prk[64], options[1], salt[16], plaintext) =
     (encryptionKey[32], hmacKey[32], iv[16], validator[16]) = Expand(prk)
 
+    magic = "RNC" (0x52 0x4e 0x43)
     version = 0x04
-    header = version || options || salt || validator
+    header = magic || version || options || salt || validator
     ciphertext = AESEncrypt(256 bits, CBCMode, encryptionKey, iv, plaintext)
     hmac = HMAC(SHA512, hmacKey, header || ciphertext, 256 bits)
     return header || ciphertext || hmac
@@ -96,8 +97,9 @@ def Decrypt(prk[64], options[1], salt[16], validator[16], ciphertext, hmac[32]) 
     (encryptionKey[32], hmacKey[32], iv[16], validator[16]) = Expand(prk)
     if (! ConsistentTimeEqual(expectedValidator, validator) return KEY_MISMATCH
 
+    magic = "RNC" (0x52 0x4e 0x43)
     version = 0x04
-    header = version || options || salt || validator
+    header = magic || version || options || salt || validator
     expectedHmac = HMAC(SHA512, hmacKey, header || ciphertext, 256 bits)
 
     if ! ConsistentTimeEqual(expectedHmac, hmac) return CORRUPT
